@@ -75,8 +75,14 @@ class Board extends React.Component {
   }
 }
 
-// =============== GAME
+// =============== GAME =======================================
 class Game extends React.Component {
+  constructor(props) {
+    super(props);
+    // history state added to display past moves. This allows removing the squares state from the Board component. This will give Game full control over Board's data, and instruct board to render previous turns from history.
+    this.state = { history: [{ squares: Array(9).fill(null) }], xIsNext: true };
+  }
+
   render() {
     return (
       <div className="game">
