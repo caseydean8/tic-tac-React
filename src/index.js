@@ -86,43 +86,57 @@ class Game extends React.Component {
   constructor(props) {
     super(props);
     // history state added to display past moves. This allows removing the squares state from the Board component. This will give Game full control over Board's data, and instruct board to render previous turns from history.
-    this.state = { history: [{ squares: Array(9).fill(null) }], xIsNext: true };
+    this.state = {
+      history: [{ squares: Array(9).fill(null) }],
+      stepNumber: 0,
+      xIsNext: true,
+    };
   }
 
   handleClick(i) {
-    const history = this.state.history;
+    const history = this.state.history.slice(0, this.state.stepNumber + 1); // Ensure that when you go back in game's history, the moves made after that point in history are deleted.
     const current = history[history.length - 1];
-    const squares = current.squares.slice(); // .slice is used here with the intention of data immutability, which will allow us to backtrack through the history of the game.
+    const squares = current.squares.slice(); // .slice is used with the intention of data immutability, which will allow us to backtrack through the history of the game.
 
     if (calculateWinner(squares) || squares[i]) return; // Ignore a click if somebody has one or if the square has already been clicked.
 
     squares[i] = this.state.xIsNext ? "X" : "0";
     this.setState({
-      history: history.concat([ // concat() method doesn't mutate the original array like push().
+      history: history.concat([
+        // concat() method doesn't mutate the original array like push().
         {
           squares: squares,
         },
       ]),
+      stepNumber: history.length, // Ensure game doesn't get stuck showing same move after a new move is made.
       xIsNext: !this.state.xIsNext,
     });
     console.log(squares);
   }
 
+  // jumpTo() updates stepNumber and sets xIsNext to true if stepNumber is even.
+  jumpTo(step) {
+    this.setState({
+      stepNumber: step,
+      xIsNext: step % 2 === 0,
+    });
+  }
+
   render() {
     // Use most recent history to determine and display game status.
     const history = this.state.history;
-    const current = history[history.length - 1];
+    const current = history[this.state.stepNumber]; // Render the currently selected move according to stepNumber.
     const winner = calculateWinner(current.squares);
 
     // map() the history of moves to React elements representing buttons on the screen, and display a list of buttons to “jump” to past moves.
     const moves = history.map((step, move) => {
       const desc = move ? `Go to move #${move}` : `Go to game start`;
       return (
-        <li>
+        <li key={move}>
           <button onClick={() => this.jumpTo(move)}>{desc}</button>
         </li>
-      )
-    })
+      );
+    });
 
     let status;
     winner
